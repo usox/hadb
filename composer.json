@@ -1,0 +1,27 @@
+{
+    "name": "usox/hadb",
+    "type": "library",
+    "description": "Query sql databases using hack in strict mode",
+    "keywords": ["hack", "postgres", "pgsql"],
+    "license": "MIT",
+    "homepage": "https://github.com/usox/hadb",
+    "authors": [
+        {
+            "name": "Daniel Jakob",
+            "email": "dev@usox.org",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+    	"hhvm": ">=3.6"
+    },
+    "require-dev": {
+	"phpunit/phpunit": "5.*"
+    },
+    "autoload": {
+        "psr-4": {
+		"Usox\\HaDb\\": "src/",
+		"Usox\\HaDb\\Test\\": "tests/"
+	}
+    }
+}
