@@ -12,7 +12,7 @@ instantiate HaDb;
 	$database_config = new MyDatabaseConfig();
 
 	$hadb = new \Usox\HaDb\DatabasePostgres(
-		$database_configuration
+		$database_config
 	);
 
 Supported Databases
