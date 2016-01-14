@@ -22,4 +22,6 @@ interface DatabaseInterface {
 	public function exists(string $query): bool;
 
 	public function count(string $query): int;
+
+	public function getLastInsertedId(): int;
 }

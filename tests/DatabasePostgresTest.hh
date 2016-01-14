@@ -294,6 +294,31 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testGetLastInsertedIdReturnsId(): void {
+		$this->createConnectionExpectation();
+
+		$query = 'SELECT LASTVAL()';
+		$resource = curl_init();
+		$id = 666;
+
+		self::$functions
+			->expects($this->once())
+			->method('pg_query')
+			->with($this->connection_resource, $query)
+			->willReturn($resource);
+
+		self::$functions
+			->expects($this->once())
+			->method('pg_fetch_result')
+			->with($resource, 0, 'lastval')
+			->willReturn((int) $id);
+
+		$this->assertSame(
+			$id,
+			$this->database->getLastInsertedId()
+		);
+	}
+
 	private function createConnectionExpectation(): void {
 		self::$functions
 			->expects($this->once())
