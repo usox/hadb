@@ -190,6 +190,20 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->database->transactionCommit();
 	}
 
+	public function testGetNextResultReturnsNullOnError(): void {
+		$resource = curl_init();
+
+		self::$functions
+			->expects($this->once())
+			->method('pg_fetch_assoc')
+			->with($resource)
+			->willReturn(false);
+
+		$this->assertNull(
+			$this->database->getNextResult($resource)
+		);
+	}
+
 	public function testGetNextResultReturnsResult(): void {
 		$resource = curl_init();
 		$result = ['key' => null];

@@ -60,7 +60,11 @@ final class DatabasePostgres implements DatabaseInterface {
 	}
 
 	public function getNextResult(resource $pgsql_resource): ?array<string, ?string> {
-		return pg_fetch_assoc($pgsql_resource);
+		$result = pg_fetch_assoc($pgsql_resource);
+		if ($result === false) {
+			return null;
+		}
+		return $result;
 	}
 
 	public function quote(string $string): string {
