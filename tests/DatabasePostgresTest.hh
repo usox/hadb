@@ -22,6 +22,7 @@ namespace Usox\HaDb\Test;
 use Usox\HaDb\DatabaseConfigInterface;
 use Usox\HaDb\DatabasePostgres;
 use Usox\HaDb\Exception;
+use \Mockery as m;
 
 class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 
@@ -34,13 +35,9 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 	public static mixed $functions;
 
 	public function setUp(): void {
-		$this->configuration = $this->getMock(DatabaseConfigInterface::class);
+		$this->configuration = m::mock(DatabaseConfigInterface::class);
 
-		self::$functions = $this->getMockBuilder('SimpleStub')
-			->setMethods(
-				['pg_connect', 'pg_query', 'pg_fetch_assoc', 'pg_escape_string', 'pg_fetch_result']
-			)
-			->getMock();
+		self::$functions = m::mock();
 		/**
 		 * Hacky! As we can't create test double of type `resource`,
 		 * we have to use a little trick
@@ -51,21 +48,38 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	public function testGetConnectionThrowsExceptionOnPgConnectFailure(): void {
-		$hostname = 'my-host';
+		$hostname = 'never.mind';
+
 		$this->setExpectedException(
 			Exception\DatabaseInitializationException::class,
 			'Connection to host '.$hostname.' failed'
 		);
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_connect')
-			->willReturn(null);
+			->shouldReceive('pg_connect')
+			->once()
+			->andReturn(null);
 
 		$this->configuration
-			->expects($this->any())
-			->method('getHost')
-			->willReturn($hostname);
+			->shouldReceive('getHost')
+			->once()
+			->andReturn($hostname);
+		$this->configuration
+			->shouldReceive('getPort')
+			->once()
+			->andReturn('');
+		$this->configuration
+			->shouldReceive('getName')
+			->once()
+			->andReturn('');
+		$this->configuration
+			->shouldReceive('getUser')
+			->once()
+			->andReturn('');
+		$this->configuration
+			->shouldReceive('getPassword')
+			->once()
+			->andReturn('');
 
 		// UNSAFE
 		$this->database->getConnection();
@@ -79,29 +93,29 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$password = 'db-pass';
 
 		$this->configuration
-			->expects($this->once())
-			->method('getHost')
-			->willReturn($hostname);
+			->shouldReceive('getHost')
+			->once()
+			->andReturn($hostname);
 		$this->configuration
-			->expects($this->once())
-			->method('getPort')
-			->willReturn($port);
+			->shouldReceive('getPort')
+			->once()
+			->andReturn($port);
 		$this->configuration
-			->expects($this->once())
-			->method('getName')
-			->willReturn($name);
+			->shouldReceive('getName')
+			->once()
+			->andReturn($name);
 		$this->configuration
-			->expects($this->once())
-			->method('getUser')
-			->willReturn($user);
+			->shouldReceive('getUser')
+			->once()
+			->andReturn($user);
 		$this->configuration
-			->expects($this->once())
-			->method('getPassword')
-			->willReturn($password);
+			->shouldReceive('getPassword')
+			->once()
+			->andReturn($password);
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_connect')
+			->shouldReceive('pg_connect')
+			->once()
 			->with(
 				sprintf(
 					'host=%s port=%d dbname=%s user=%s password=%s',
@@ -112,7 +126,7 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 					$password
 				)
 			)
-			->willReturn($this->connection_resource);
+			->andReturn($this->connection_resource);
 
 		// UNSAFE
 		$this->assertSame(
@@ -125,8 +139,16 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 		$query_count_before = $this->database->getQueryCount();
 
+		$query = 'this is supposed to fail';
+
+		self::$functions
+			->shouldReceive('pg_query')
+			->once()
+			->with($this->connection_resource, $query)
+			->andThrow(Exception\QueryFailedException::class);
+
 		try {
-			$this->database->query('NOTHING');
+			$this->database->query($query);
 		} catch (Exception\QueryFailedException $e) {
 		}
 
@@ -143,10 +165,10 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$result = curl_init();
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_query')
+			->shouldReceive('pg_query')
+			->once()
 			->with($this->connection_resource, $query)
-			->willReturn($result);
+			->andReturn($result);
 
 		$this->assertSame(
 			$result,
@@ -158,10 +180,10 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_query')
+			->shouldReceive('pg_query')
+			->once()
 			->with($this->connection_resource, 'BEGIN')
-			->willReturn(curl_init());
+			->andReturn(curl_init());
 
 		$this->database->transactionBegin();
 	}
@@ -170,10 +192,10 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_query')
+			->shouldReceive('pg_query')
+			->once()
 			->with($this->connection_resource, 'COMMIT')
-			->willReturn(curl_init());
+			->andReturn(curl_init());
 
 		$this->database->transactionCommit();
 	}
@@ -182,78 +204,60 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_query')
+			->shouldReceive('pg_query')
+			->once()
 			->with($this->connection_resource, 'COMMIT')
-			->willReturn(curl_init());
+			->andReturn(curl_init());
 
 		$this->database->transactionCommit();
 	}
 
 	public function testGetNextResultReturnsNullOnError(): void {
-		$resource = curl_init();
+		$this->connection_resource = curl_init();
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_fetch_assoc')
-			->with($resource)
-			->willReturn(false);
+			->shouldReceive('pg_fetch_assoc')
+			->once()
+			->with($this->connection_resource)
+			->andReturn(false);
 
 		$this->assertNull(
-			$this->database->getNextResult($resource)
+			$this->database->getNextResult($this->connection_resource)
 		);
 	}
 
 	public function testGetNextResultReturnsResult(): void {
-		$resource = curl_init();
+		$this->connection_resource = curl_init();
 		$result = ['key' => null];
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_fetch_assoc')
-			->with($resource)
-			->willReturn($result);
+			->shouldReceive('pg_fetch_assoc')
+			->once()
+			->with($this->connection_resource)
+			->andReturn($result);
 
 		$this->assertSame(
 			$result,
-			$this->database->getNextResult($resource)
+			$this->database->getNextResult($this->connection_resource)
 		);
 	}
 
 	public function testQuoteReturnsEscapedString(): void {
 		$this->createConnectionExpectation();
 
-		$string = 'my-string';
+		$query = 'my-fancy-query';
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_escape_string')
-			->with($this->connection_resource, $string)
-			->willReturn($string);
-
-		$this->assertSame(
-			$string,
-			$this->database->quote($string)
-		);
-	}
-
-	public function testExistsReturnsTrueIfItemExists(): void {
-		$this->createConnectionExpectation();
-
-		$query = 'SELECT EXISTS(meh)';
-		$resource = curl_init();
-
-		self::$functions
-			->expects($this->once())
-			->method('pg_query')
+			->shouldReceive('pg_query')
+			->once()
 			->with($this->connection_resource, $query)
-			->willReturn($resource);
+			->andReturn($this->connection_resource);
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_fetch_result')
-			->with($resource, 0, 'exists')
-			->willReturn('t');
+			->shouldReceive('pg_fetch_result')
+			->once()
+			->with($this->connection_resource, 0, 'exists')
+			->andReturn('t');
 
 		$this->assertTrue(
 			$this->database->exists($query)
@@ -264,19 +268,18 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		$query = 'SELECT EXISTS(meh)';
-		$resource = curl_init();
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_query')
+			->shouldReceive('pg_query')
+			->once()
 			->with($this->connection_resource, $query)
-			->willReturn($resource);
+			->andReturn($this->connection_resource);
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_fetch_result')
-			->with($resource, 0, 'exists')
-			->willReturn('f');
+			->shouldReceive('pg_fetch_result')
+			->once()
+			->with($this->connection_resource, 0, 'exists')
+			->andReturn('f');
 
 		$this->assertFalse(
 			$this->database->exists($query)
@@ -287,20 +290,19 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		$query = 'SELECT COUNT(*)';
-		$resource = curl_init();
 		$count = 123;
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_query')
+			->shouldReceive('pg_query')
+			->once()
 			->with($this->connection_resource, $query)
-			->willReturn($resource);
+			->andReturn($this->connection_resource);
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_fetch_result')
-			->with($resource, 0, 'count')
-			->willReturn((string) $count);
+			->shouldReceive('pg_fetch_result')
+			->once()
+			->with($this->connection_resource, 0, 'count')
+			->andReturn((string) $count);
 
 		$this->assertSame(
 			$count,
@@ -312,20 +314,19 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		$query = 'SELECT LASTVAL()';
-		$resource = curl_init();
 		$id = 666;
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_query')
+			->shouldReceive('pg_query')
+			->once()
 			->with($this->connection_resource, $query)
-			->willReturn($resource);
+			->andReturn($this->connection_resource);
 
 		self::$functions
-			->expects($this->once())
-			->method('pg_fetch_result')
-			->with($resource, 0, 'lastval')
-			->willReturn((int) $id);
+			->shouldReceive('pg_fetch_result')
+			->once()
+			->with($this->connection_resource, 0, 'lastval')
+			->andReturn((int) $id);
 
 		$this->assertSame(
 			$id,
@@ -334,9 +335,35 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	private function createConnectionExpectation(): void {
+		$hostname = 'my-host';
+		$port = 1337;
+		$name = 'my-db';
+		$user = 'db-user';
+		$password = 'db-pass';
+
+		$this->configuration
+			->shouldReceive('getHost')
+			->once()
+			->andReturn($hostname);
+		$this->configuration
+			->shouldReceive('getPort')
+			->once()
+			->andReturn($port);
+		$this->configuration
+			->shouldReceive('getName')
+			->once()
+			->andReturn($name);
+		$this->configuration
+			->shouldReceive('getUser')
+			->once()
+			->andReturn($user);
+		$this->configuration
+			->shouldReceive('getPassword')
+			->once()
+			->andReturn($password);
 		self::$functions
-			->expects($this->once())
-			->method('pg_connect')
-			->willReturn($this->connection_resource);
+			->shouldReceive('pg_connect')
+			->once()
+			->andReturn($this->connection_resource);
 	}
 }
