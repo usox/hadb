@@ -62,7 +62,7 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 
 		$this->configuration
 			->shouldReceive('getHost')
-			->once()
+			->twice()
 			->andReturn($hostname);
 		$this->configuration
 			->shouldReceive('getPort')
