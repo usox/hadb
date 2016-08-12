@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/usox/hadb.svg?branch=master)](https://travis-ci.org/usox/hadb)
+
 HaDb - Hack DB
 ==============
 
