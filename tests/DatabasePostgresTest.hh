@@ -136,6 +136,8 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	public function testQueryFailsButIncrementsQueryCount(): void {
+		$this->setExpectedException(Exception\QueryFailedException::class);
+
 		$this->createConnectionExpectation();
 		$query_count_before = $this->database->getQueryCount();
 
@@ -145,12 +147,9 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 			->shouldReceive('pg_query')
 			->once()
 			->with($this->connection_resource, $query)
-			->andThrow(Exception\QueryFailedException::class);
+			->andReturn(false);
 
-		try {
-			$this->database->query($query);
-		} catch (Exception\QueryFailedException $e) {
-		}
+		$this->database->query($query);
 
 		$this->assertSame(
 			$query_count_before+1,
