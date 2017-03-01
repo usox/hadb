@@ -147,7 +147,7 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 			->shouldReceive('pg_query')
 			->once()
 			->with($this->connection_resource, $query)
-			->andReturn(false);
+			->andReturn(null);
 
 		$this->database->query($query);
 
