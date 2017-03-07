@@ -11,11 +11,13 @@ Usage
 Just create a config class using the `\Usox\HaDb\DatabaseConfigInterface` and
 instantiate HaDb;
 
+```php
 	$database_config = new MyDatabaseConfig();
 
 	$hadb = new \Usox\HaDb\DatabasePostgres(
 		$database_config
 	);
+```
 
 Supported Databases
 -------------------
