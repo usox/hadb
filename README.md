@@ -3,7 +3,7 @@
 HaDb - Hack DB
 ==============
 
-Query sql databases using hack in strict mode - that's all.
+Query sql databases using hack in strict mode - that's it.
 
 Usage
 -----
@@ -23,3 +23,4 @@ Supported Databases
 -------------------
 
 * PostgreSQL
+* MySql
