@@ -1,30 +1,39 @@
 <?hh // decl
 namespace Usox\HaDb;
 
-function pg_connect($connection_string) {
-	return \Usox\HaDb\Test\DatabasePostgresTest::$functions->pg_connect($connection_string);
+function mysql_connect(string $host, string $user, string $password) {
+	return \Usox\HaDb\Test\DatabaseMySqlTest::$functions->mysql_connect($host, $user, $password);
 }
-function pg_query($connection, $query_string) {
-	return \Usox\HaDb\Test\DatabasePostgresTest::$functions->pg_query($connection, $query_string);
+function mysql_select_db(string $db_name, ?resource $resource) {
+	return \Usox\HaDb\Test\DatabaseMySqlTest::$functions->mysql_select_db($db_name, $resource);
 }
-function pg_fetch_assoc(resource $pgsql_resource) {
-	return \Usox\HaDb\Test\DatabasePostgresTest::$functions->pg_fetch_assoc($pgsql_resource);
+function mysql_query(string $query_string, resource $connection) {
+	return \Usox\HaDb\Test\DatabaseMySqlTest::$functions->mysql_query($query_string, $connection);
 }
-function pg_escape_string($connection, $string) {
-	return \Usox\HaDb\Test\DatabasePostgresTest::$functions->pg_escape_string($connection, $string);
+function mysql_fetch_assoc(resource $resource) {
+	return \Usox\HaDb\Test\DatabaseMySqlTest::$functions->mysql_fetch_assoc($resource);
 }
-function pg_fetch_result(resource $resource, int $row_number, string $field_name) {
-	return \Usox\HaDb\Test\DatabasePostgresTest::$functions->pg_fetch_result($resource, $row_number, $field_name);
+function mysql_real_escape_string(string $string, resource $connection) {
+	return \Usox\HaDb\Test\DatabaseMySqlTest::$functions->mysql_real_escape_string($string, $connection);
+}
+function mysql_insert_id(resource $resource) {
+	return \Usox\HaDb\Test\DatabaseMySqlTest::$functions->mysql_insert_id($resource);
+}
+function mysql_result(resource $resource, int $row_number, string $field_name) {
+	return \Usox\HaDb\Test\DatabaseMySqlTest::$functions->mysql_result($resource, $row_number, $field_name);
+}
+function mysql_num_rows(resource $resource) {
+	return \Usox\HaDb\Test\DatabaseMySqlTest::$functions->mysql_num_rows($resource);
 }
 
 namespace Usox\HaDb\Test;
 
 use Usox\HaDb\DatabaseConfigInterface;
-use Usox\HaDb\DatabasePostgres;
+use Usox\HaDb\DatabaseMySql;
 use Usox\HaDb\Exception;
 use \Mockery as m;
 
-class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
+class DatabaseMySqlTest extends \PHPUnit_Framework_TestCase {
 
 	private ?DatabaseConfigInterface $configuration;
 
@@ -44,10 +53,10 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		 */
 		$this->connection_resource = curl_init();
 
-		$this->database = new DatabasePostgres($this->configuration);
+		$this->database = new DatabaseMySql($this->configuration);
 	}
 
-	public function testGetConnectionThrowsExceptionOnPgConnectFailure(): void {
+	public function testGetConnectionThrowsExceptionOnMySqlConnectFailure(): void {
 		$hostname = 'never.mind';
 
 		$this->setExpectedException(
@@ -56,9 +65,14 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		);
 
 		self::$functions
-			->shouldReceive('pg_connect')
+			->shouldReceive('mysql_connect')
 			->once()
 			->andReturn(null);
+		self::$functions
+			->shouldReceive('mysql_select_db')
+			->with('', null)
+			->once()
+			->andReturn(true);
 
 		$this->configuration
 			->shouldReceive('getHost')
@@ -114,21 +128,20 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 			->andReturn($password);
 
 		self::$functions
-			->shouldReceive('pg_connect')
+			->shouldReceive('mysql_connect')
 			->once()
 			->with(
-				sprintf(
-					'host=%s port=%d dbname=%s user=%s password=%s',
-					$hostname,
-					$port,
-					$name,
-					$user,
-					$password
-				)
+				sprintf('%s:%d', $hostname, $port),
+				$user,
+				$password
 			)
 			->andReturn($this->connection_resource);
+		self::$functions
+			->shouldReceive('mysql_select_db')
+			->with($name, $this->connection_resource)
+			->once()
+			->andReturn(true);
 
-		// UNSAFE
 		$this->assertSame(
 			$this->connection_resource,
 			$this->database->getConnection()
@@ -144,10 +157,10 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$query = 'this is supposed to fail';
 
 		self::$functions
-			->shouldReceive('pg_query')
+			->shouldReceive('mysql_query')
 			->once()
-			->with($this->connection_resource, $query)
-			->andReturn(null);
+			->with($query, $this->connection_resource)
+			->andReturn(false);
 
 		$this->database->query($query);
 
@@ -164,9 +177,9 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$result = curl_init();
 
 		self::$functions
-			->shouldReceive('pg_query')
+			->shouldReceive('mysql_query')
 			->once()
-			->with($this->connection_resource, $query)
+			->with($query, $this->connection_resource)
 			->andReturn($result);
 
 		$this->assertSame(
@@ -179,9 +192,9 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		self::$functions
-			->shouldReceive('pg_query')
+			->shouldReceive('mysql_query')
 			->once()
-			->with($this->connection_resource, 'BEGIN')
+			->with('START TRANSACTION', $this->connection_resource)
 			->andReturn(curl_init());
 
 		$this->database->transactionBegin();
@@ -191,9 +204,9 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		self::$functions
-			->shouldReceive('pg_query')
+			->shouldReceive('mysql_query')
 			->once()
-			->with($this->connection_resource, 'COMMIT')
+			->with('COMMIT', $this->connection_resource)
 			->andReturn(curl_init());
 
 		$this->database->transactionCommit();
@@ -203,9 +216,9 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->createConnectionExpectation();
 
 		self::$functions
-			->shouldReceive('pg_query')
+			->shouldReceive('mysql_query')
 			->once()
-			->with($this->connection_resource, 'COMMIT')
+			->with('COMMIT', $this->connection_resource)
 			->andReturn(curl_init());
 
 		$this->database->transactionCommit();
@@ -215,7 +228,7 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$this->connection_resource = curl_init();
 
 		self::$functions
-			->shouldReceive('pg_fetch_assoc')
+			->shouldReceive('mysql_fetch_assoc')
 			->once()
 			->with($this->connection_resource)
 			->andReturn(false);
@@ -230,7 +243,7 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$result = ['key' => null];
 
 		self::$functions
-			->shouldReceive('pg_fetch_assoc')
+			->shouldReceive('mysql_fetch_assoc')
 			->once()
 			->with($this->connection_resource)
 			->andReturn($result);
@@ -248,9 +261,9 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$escaped_query = 'my-fancy-escaped-query';
 
 		self::$functions
-			->shouldReceive('pg_escape_string')
+			->shouldReceive('mysql_real_escape_string')
 			->once()
-			->with($this->connection_resource, $query)
+			->with($query, $this->connection_resource)
 			->andReturn($escaped_query);
 
 		$this->assertSame(
@@ -262,19 +275,19 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 	public function testExistsReturnsFalseIfItemDoesNotExists(): void {
 		$this->createConnectionExpectation();
 
-		$query = 'SELECT EXISTS(meh)';
+		$query = 'SELECT 1';
 
 		self::$functions
-			->shouldReceive('pg_query')
+			->shouldReceive('mysql_query')
 			->once()
-			->with($this->connection_resource, $query)
+			->with($query, $this->connection_resource)
 			->andReturn($this->connection_resource);
 
 		self::$functions
-			->shouldReceive('pg_fetch_result')
+			->shouldReceive('mysql_num_rows')
 			->once()
-			->with($this->connection_resource, 0, 'exists')
-			->andReturn('f');
+			->with($this->connection_resource)
+			->andReturn(0);
 
 		$this->assertFalse(
 			$this->database->exists($query)
@@ -288,13 +301,13 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		$count = 123;
 
 		self::$functions
-			->shouldReceive('pg_query')
+			->shouldReceive('mysql_query')
 			->once()
-			->with($this->connection_resource, $query)
+			->with($query, $this->connection_resource)
 			->andReturn($this->connection_resource);
 
 		self::$functions
-			->shouldReceive('pg_fetch_result')
+			->shouldReceive('mysql_result')
 			->once()
 			->with($this->connection_resource, 0, 'count')
 			->andReturn((string) $count);
@@ -308,19 +321,12 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 	public function testGetLastInsertedIdReturnsId(): void {
 		$this->createConnectionExpectation();
 
-		$query = 'SELECT LASTVAL()';
 		$id = 666;
 
 		self::$functions
-			->shouldReceive('pg_query')
+			->shouldReceive('mysql_insert_id')
 			->once()
-			->with($this->connection_resource, $query)
-			->andReturn($this->connection_resource);
-
-		self::$functions
-			->shouldReceive('pg_fetch_result')
-			->once()
-			->with($this->connection_resource, 0, 'lastval')
+			->with($this->connection_resource)
 			->andReturn((int) $id);
 
 		$this->assertSame(
@@ -357,8 +363,12 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 			->once()
 			->andReturn($password);
 		self::$functions
-			->shouldReceive('pg_connect')
+			->shouldReceive('mysql_connect')
 			->once()
 			->andReturn($this->connection_resource);
+		self::$functions
+			->shouldReceive('mysql_select_db')
+			->once()
+			->andReturn(true);
 	}
 }
