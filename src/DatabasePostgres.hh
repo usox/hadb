@@ -23,12 +23,12 @@ final class DatabasePostgres implements DatabaseInterface {
 				)
 			);
 		}
-		if ($this->connection === null) {
-			throw new Exception\DatabaseInitializationException(
-				sprintf('Connection to host %s failed', $this->config->getHost())
-			);
+		if (is_resource($this->connection)) {
+			return $this->connection;
 		}
-		return $this->connection;
+		throw new Exception\DatabaseInitializationException(
+			sprintf('Connection to host %s failed', $this->config->getHost())
+		);
 	}
 
 	public function getQueryCount(): int {
