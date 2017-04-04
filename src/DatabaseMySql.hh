@@ -39,12 +39,12 @@ final class DatabaseMySql implements DatabaseInterface {
 		$this->query_count++;
 
 		$result = mysql_query($query, $this->getConnection());
-		if ($result === false) {
-			throw new Exception\QueryFailedException(
-				sprintf('Query failed: %s', $query)
-			);
+		if (is_resource($result)) {
+			return $result;
 		}
-		return $result;
+		throw new Exception\QueryFailedException(
+			sprintf('Query failed: %s', $query)
+		);
 	}
 
 	public function transactionBegin(): void {

@@ -39,12 +39,13 @@ final class DatabasePostgres implements DatabaseInterface {
 		$this->query_count++;
 
 		$result = pg_query($this->getConnection(), $query);
-		if ($result === null) {
-			throw new Exception\QueryFailedException(
-				sprintf('Query failed: %s', $query)
-			);
+
+		if (is_resource($result)) {
+			return $result;
 		}
-		return $result;
+		throw new Exception\QueryFailedException(
+			sprintf('Query failed: %s', $query)
+		);
 	}
 
 	public function transactionBegin(): void {
