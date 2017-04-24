@@ -73,7 +73,7 @@ final class DatabaseMySql implements DatabaseInterface {
 
 	public function exists(string $query): bool {
 		return mysql_num_rows($this->query($query)) > 0;
-	}   
+	}
 
 	public function count(string $query): int {
 		return (int) mysql_result($this->query($query), 0, 'count');

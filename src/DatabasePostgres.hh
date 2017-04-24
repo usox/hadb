@@ -73,8 +73,8 @@ final class DatabasePostgres implements DatabaseInterface {
 	}
 
         public function exists(string $query): bool {
-                return pg_fetch_result($this->query($query), 0, 'exists') === 't';
-        }   
+		return pg_num_rows($this->query($query)) > 0;
+        }
 
         public function count(string $query): int {
                 return (int) pg_fetch_result($this->query($query), 0, 'count');

@@ -16,6 +16,9 @@ function pg_escape_string($connection, $string) {
 function pg_fetch_result(resource $resource, int $row_number, string $field_name) {
 	return \Usox\HaDb\Test\DatabasePostgresTest::$functions->pg_fetch_result($resource, $row_number, $field_name);
 }
+function pg_num_rows(resource $resource) {
+	return \Usox\HaDb\Test\DatabasePostgresTest::$functions->pg_num_rows($resource);
+}
 
 namespace Usox\HaDb\Test;
 
@@ -271,10 +274,10 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 			->andReturn($this->connection_resource);
 
 		self::$functions
-			->shouldReceive('pg_fetch_result')
+			->shouldReceive('pg_num_rows')
 			->once()
-			->with($this->connection_resource, 0, 'exists')
-			->andReturn('f');
+			->with($this->connection_resource)
+			->andReturn(0);
 
 		$this->assertFalse(
 			$this->database->exists($query)
