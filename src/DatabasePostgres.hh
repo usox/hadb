@@ -83,4 +83,10 @@ final class DatabasePostgres implements DatabaseInterface {
 	public function getLastInsertedId(): int {
 		return (int) pg_fetch_result($this->query('SELECT LASTVAL()'), 0, 'lastval');
 	}
+
+	public function emptyTable(string $table_name): void {
+		$this->query(
+			sprintf('TRUNCATE TABLE %s', $table_name)
+		);
+	}
 }

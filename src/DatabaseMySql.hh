@@ -82,4 +82,10 @@ final class DatabaseMySql implements DatabaseInterface {
 	public function getLastInsertedId(): int {
 		return (int) mysql_insert_id($this->getConnection());
 	}
+
+	public function emptyTable(string $table_name): void {
+		$this->query(
+			sprintf('TRUNCATE TABLE %s', $table_name)
+		);
+	}
 }

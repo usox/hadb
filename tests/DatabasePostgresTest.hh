@@ -332,6 +332,24 @@ class DatabasePostgresTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	public function testEmptyTableTruncatesTable(): void {
+		$this->createConnectionExpectation();
+
+		$table_name = 'some-table-name';
+
+		$query = sprintf('TRUNCATE TABLE %s', $table_name);
+
+		self::$functions
+			->shouldReceive('pg_query')
+			->once()
+			->with($this->connection_resource, $query)
+			->andReturn($this->connection_resource);
+
+		$this->assertNull(
+			$this->database->emptyTable($table_name)
+		);
+	}
+
 	private function createConnectionExpectation(): void {
 		$hostname = 'my-host';
 		$port = 1337;

@@ -24,4 +24,6 @@ interface DatabaseInterface {
 	public function count(string $query): int;
 
 	public function getLastInsertedId(): int;
+
+	public function emptyTable(string $table_name): void;
 }
