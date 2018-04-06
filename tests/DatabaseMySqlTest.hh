@@ -81,7 +81,7 @@ class DatabaseMySqlTest extends \PHPUnit_Framework_TestCase {
 		$this->configuration
 			->shouldReceive('getPort')
 			->once()
-			->andReturn('');
+			->andReturn(1234);
 		$this->configuration
 			->shouldReceive('getName')
 			->once()
