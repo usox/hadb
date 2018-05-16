@@ -13,7 +13,7 @@ interface DatabaseInterface {
 
 	public function transactionRollback(): void;
 
-	public function getNextResult(resource $pgsql_resource): ?array<string, ?string>;
+	public function getNextResult(resource $resource): ?array<string, ?string>;
 
 	public function getConnection(): resource;
 

@@ -12,22 +12,22 @@ final class DatabaseMySql implements DatabaseInterface {
 
 	public function getConnection(): resource {
 		if ($this->connection === null) {
-			$this->connection = mysql_connect(
-				sprintf('%s:%d', $this->config->getHost(), $this->config->getPort()),
+			$this->connection = \mysql_connect(
+				\sprintf('%s:%d', $this->config->getHost(), $this->config->getPort()),
 				$this->config->getUser(),
 				$this->config->getPassword()
 			);
-			if (false === mysql_select_db($this->config->getName(), $this->connection)) {
+			if (false === \mysql_select_db($this->config->getName(), $this->connection)) {
 				throw new Exception\DatabaseInitializationException(
-					sprintf('Database %s does not exist', $this->config->getName())
+					\sprintf('Database %s does not exist', $this->config->getName())
 				);
 			}
 		}
-		if (is_resource($this->connection)) {
+		if (\is_resource($this->connection)) {
 			return $this->connection;
 		}
 		throw new Exception\DatabaseInitializationException(
-			sprintf('Connection to host %s failed', $this->config->getHost())
+			\sprintf('Connection to host %s failed', $this->config->getHost())
 		);
 	}
 
@@ -38,12 +38,12 @@ final class DatabaseMySql implements DatabaseInterface {
 	public function query(string $query): resource {
 		$this->query_count++;
 
-		$result = mysql_query($query, $this->getConnection());
-		if (is_resource($result)) {
+		$result = \mysql_query($query, $this->getConnection());
+		if (\is_resource($result)) {
 			return $result;
 		}
 		throw new Exception\QueryFailedException(
-			sprintf('Query failed: %s', $query)
+			\sprintf('Query failed: %s', $query)
 		);
 	}
 
@@ -60,7 +60,7 @@ final class DatabaseMySql implements DatabaseInterface {
 	}
 
 	public function getNextResult(resource $resource): ?array<string, ?string> {
-		$result = mysql_fetch_assoc($resource);
+		$result = \mysql_fetch_assoc($resource);
 		if ($result === false) {
 			return null;
 		}
@@ -68,24 +68,24 @@ final class DatabaseMySql implements DatabaseInterface {
 	}
 
 	public function quote(string $string): string {
-		return mysql_real_escape_string($string, $this->getConnection());
+		return \mysql_real_escape_string($string, $this->getConnection());
 	}
 
 	public function exists(string $query): bool {
-		return mysql_num_rows($this->query($query)) > 0;
+		return \mysql_num_rows($this->query($query)) > 0;
 	}
 
 	public function count(string $query): int {
-		return (int) mysql_result($this->query($query), 0, 'count');
+		return (int) \mysql_result($this->query($query), 0, 'count');
 	}
 
 	public function getLastInsertedId(): int {
-		return (int) mysql_insert_id($this->getConnection());
+		return (int) \mysql_insert_id($this->getConnection());
 	}
 
 	public function emptyTable(string $table_name): void {
 		$this->query(
-			sprintf('TRUNCATE TABLE %s', $table_name)
+			\sprintf('TRUNCATE TABLE %s', $table_name)
 		);
 	}
 }

@@ -30,7 +30,4 @@
 	 <php>
 		 <ini name="date.timezone" value="Europe/Berlin" />
 	 </php>
-	 <listeners>
-		 <listener class="\Mockery\Adapter\Phpunit\TestListener"></listener>
-	 </listeners>
 </phpunit>

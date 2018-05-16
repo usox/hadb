@@ -12,8 +12,8 @@ final class DatabasePostgres implements DatabaseInterface {
 
 	public function getConnection(): resource {
 		if ($this->connection === null) {
-			$this->connection = pg_connect(
-				sprintf(
+			$this->connection = \pg_connect(
+				\sprintf(
 					'host=%s port=%d dbname=%s user=%s password=%s',
 					$this->config->getHost(),
 					$this->config->getPort(),
@@ -23,11 +23,11 @@ final class DatabasePostgres implements DatabaseInterface {
 				)
 			);
 		}
-		if (is_resource($this->connection)) {
+		if (\is_resource($this->connection)) {
 			return $this->connection;
 		}
 		throw new Exception\DatabaseInitializationException(
-			sprintf('Connection to host %s failed', $this->config->getHost())
+			\sprintf('Connection to host %s failed', $this->config->getHost())
 		);
 	}
 
@@ -38,13 +38,13 @@ final class DatabasePostgres implements DatabaseInterface {
 	public function query(string $query): resource {
 		$this->query_count++;
 
-		$result = pg_query($this->getConnection(), $query);
+		$result = \pg_query($this->getConnection(), $query);
 
-		if (is_resource($result)) {
+		if (\is_resource($result)) {
 			return $result;
 		}
 		throw new Exception\QueryFailedException(
-			sprintf('Query failed: %s', $query)
+			\sprintf('Query failed: %s', $query)
 		);
 	}
 
@@ -61,7 +61,7 @@ final class DatabasePostgres implements DatabaseInterface {
 	}
 
 	public function getNextResult(resource $pgsql_resource): ?array<string, ?string> {
-		$result = pg_fetch_assoc($pgsql_resource);
+		$result = \pg_fetch_assoc($pgsql_resource);
 		if ($result === false) {
 			return null;
 		}
@@ -69,24 +69,22 @@ final class DatabasePostgres implements DatabaseInterface {
 	}
 
 	public function quote(string $string): string {
-		return pg_escape_string($this->getConnection(), $string);
+		return (string) \pg_escape_string($this->getConnection(), $string);
 	}
 
-        public function exists(string $query): bool {
-		return pg_num_rows($this->query($query)) > 0;
-        }
+	public function exists(string $query): bool {
+		return \pg_num_rows($this->query($query)) > 0;
+	}
 
-        public function count(string $query): int {
-                return (int) pg_fetch_result($this->query($query), 0, 'count');
-        }
+	public function count(string $query): int {
+		return (int) \pg_fetch_result($this->query($query), 0, 'count');
+	}
 
 	public function getLastInsertedId(): int {
-		return (int) pg_fetch_result($this->query('SELECT LASTVAL()'), 0, 'lastval');
+		return (int) \pg_fetch_result($this->query('SELECT LASTVAL()'), 0, 'lastval');
 	}
 
 	public function emptyTable(string $table_name): void {
-		$this->query(
-			sprintf('TRUNCATE TABLE %s', $table_name)
-		);
+		$this->query(\sprintf('TRUNCATE TABLE %s', $table_name));
 	}
 }
