@@ -12,4 +12,8 @@ interface DatabaseConfigInterface {
 	public function getUser(): string;
 
 	public function getPassword(): string;
+
+	public function getDriver(): string;
+
+	public function __toString(): string;
 }
