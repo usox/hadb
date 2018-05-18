@@ -23,7 +23,7 @@ interface DatabaseAdapterInterface {
 
 	public function count(string $query): int;
 
-	public function getLastInsertedId(): int;
+	public function getLastInsertedId(string $sequence_name): int;
 
 	public function emptyTable(string $table_name): void;
 }

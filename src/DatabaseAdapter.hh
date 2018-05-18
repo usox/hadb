@@ -10,7 +10,7 @@ final class DatabaseAdapter implements DatabaseAdapterInterface {
 	public function __construct(
 		private (function(DatabaseConfigInterface): \PDO) $initialization,
 		private DatabaseConfigInterface $config
-		): void {
+	): void {
 	}
 
 	public function getConnection(): \PDO {
@@ -72,21 +72,19 @@ final class DatabaseAdapter implements DatabaseAdapterInterface {
 	}
 
 	public function exists(string $query): bool {
-		return $this
-			->query($query)
-			->fetchColumn() == '1';
+		return $this->count($query) > 0;
 	}
 
 	public function count(string $query): int {
 		return (int) $this
 			->query($query)
-			->fetchColumn('count');
+			->fetchColumn();
 	}
 
-	public function getLastInsertedId(): int {
+	public function getLastInsertedId(string $sequence_name): int {
 		return (int) $this
-			->query('SELECT LASTVAL()')
-			->fetchColumn('lastval');
+			->getConnection()
+			->lastInsertId($sequence_name);
 	}
 
 	public function emptyTable(string $table_name): void {
