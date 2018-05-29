@@ -12,11 +12,11 @@ Just create a config class using the `\Usox\HaDb\DatabaseConfigInterface` and
 instantiate HaDb;
 
 ```php
-	$database_config = new MyDatabaseConfig();
+$database_config = new MyDatabaseConfig();
 
-	$hadb = new \Usox\HaDb\DatabasePostgres(
-		$database_config
-	);
+$hadb = Usox\HaDb\DatabaseAdapter::factory(
+  $database_config
+);
 ```
 
 Supported Databases
