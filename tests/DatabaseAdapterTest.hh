@@ -11,6 +11,7 @@ class DatabaseAdapterTest extends \PHPUnit_Framework_TestCase {
 
     private ?DatabaseConfigInterface $config;
 
+    <<__Override>>
     public function setUp(): void {
         $this->config = $this->createMock(DatabaseConfigInterface::class);
         // UNSAFE

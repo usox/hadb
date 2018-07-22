@@ -1,7 +1,7 @@
 <?hh // strict
 namespace Usox\HaDb;
 
-use HH\Lib\Str;
+use namespace HH\Lib\Str;
 
 abstract class AbstractDatabaseConfig implements DatabaseConfigInterface {
 

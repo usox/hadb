@@ -23,9 +23,10 @@ final class DatabaseAdapter implements DatabaseAdapterInterface {
 				);
 			}
 			$this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-		}
-		if ($this->connection === null) {
-			throw new Exception\DatabaseInitializationException('Database initialization failed');
+
+			if ($this->connection === null) {
+				throw new Exception\DatabaseInitializationException('Database initialization failed');
+			}
 		}
 
 		return $this->connection;
