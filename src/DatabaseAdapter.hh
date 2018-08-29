@@ -17,12 +17,12 @@ final class DatabaseAdapter implements DatabaseAdapterInterface {
 		if ($this->connection === null) {
 			try {
 				$this->connection = call_user_func($this->initialization, $this->config);
+				$this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 			} catch (\PDOException $e) {
 				throw new Exception\DatabaseInitializationException(
 					$e->getMessage()
 				);
 			}
-			$this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
 			if ($this->connection === null) {
 				throw new Exception\DatabaseInitializationException('Database initialization failed');
