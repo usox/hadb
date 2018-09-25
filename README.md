@@ -14,13 +14,5 @@ instantiate HaDb;
 ```php
 $database_config = new MyDatabaseConfig();
 
-$hadb = Usox\HaDb\DatabaseAdapter::factory(
-  $database_config
-);
+$hadb = new Usox\HaDb\DatabaseAdapter($database_config);
 ```
-
-Supported Databases
--------------------
-
-* PostgreSQL
-* MySql
